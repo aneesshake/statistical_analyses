@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Hugo 0.75.1" />
+
+
+<title>TTC Delays - Anees&#39; Website</title>
+<meta property="og:title" content="TTC Delays - Anees&#39; Website">
+
+
+  <link href='/favicon.ico' rel='icon' type='image/x-icon'/>
+
+
+
+  
+
+
+
+
+
+
+
+
+<link href='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css' rel='stylesheet' type='text/css' />
+
+
+
+<link rel="stylesheet" href="/css/fonts.css" media="all">
+<link rel="stylesheet" href="/css/main.css" media="all">
+
+
+
+  </head>
+  <body>
+    <div class="wrapper">
+      <header class="header">
+        <nav class="nav">
+  <a href="/" class="nav-logo">
+    <img src="/images/logo.png"
+         width="50"
+         height="50"
+         alt="Logo">
+  </a>
+
+  <ul class="nav-links">
+    
+    <li><a href="/about/">About</a></li>
+    
+    <li><a href="https://github.com/aneesshake/statistical_analyses">GitHub</a></li>
+    
+    <li><a href="https://twitter.com/rstudio">Twitter</a></li>
+    
+  </ul>
+</nav>
+
+      </header>
+
+
+<main class="content" role="main">
+
+  <article class="article">
+    
+    <span class="article-duration">7 min read</span>
+    
+
+    <h1 class="article-title">TTC Delays</h1>
+
+    
+    <span class="article-date">2020-09-19</span>
+    
+
+    <div class="article-content">
+      
+
+
+<div id="introduction" class="section level1">
+<h1>Introduction</h1>
+<p>In this analyses, we are going to look at the average delay time of TTC subways, streetcars, and buses</p>
+<pre class="r"><code>
+library(tidyverse)
+library(blogdown)
+library(opendatatoronto)
+library(skimr)
+library(visdat)</code></pre>
+<pre class="r"><code>subway_error_codes &lt;- search_packages(&quot;TTC Subway Delay Data&quot;) %&gt;% list_package_resources() %&gt;% filter(name == &quot;ttc-subway-delay-codes&quot;) %&gt;% get_resource()
+## New names:
+## * `` -&gt; ...1
+## * `CODE DESCRIPTION` -&gt; `CODE DESCRIPTION...3`
+## * `` -&gt; ...4
+## * `` -&gt; ...5
+## * `CODE DESCRIPTION` -&gt; `CODE DESCRIPTION...7`
+
+
+
+subway_delay&lt;- search_packages(&quot;TTC Subway Delay Data&quot;) %&gt;% #First, looking for packages TTC Subway Delay data, need to specify this as there are more types of delay data that we will be selecting later on
+  list_package_resources() %&gt;% 
+  filter(grepl(&#39;ttc-subway-delay-june-2019&#39;,name)) %&gt;% 
+  get_resource() %&gt;% as_tibble()
+
+bus_delay_year &lt;- search_packages(&quot;TTC Bus Delay Data&quot;) %&gt;% #First, looking for packages TTC Subway Delay data, need to specify this as there are more types of delay data that we will be selecting later on
+  list_package_resources() %&gt;% 
+  filter(grepl(&#39;ttc-bus-delay-data-2019&#39;,name)) %&gt;% 
+  get_resource()
+
+bus_delay &lt;- bus_delay_year[[&#39;June 2019&#39;]]
+bus_delay
+## # A tibble: 5,232 x 10
+##    `Report Date`       Route Time                Day   Location Incident Delay
+##    &lt;dttm&gt;              &lt;dbl&gt; &lt;dttm&gt;              &lt;chr&gt; &lt;chr&gt;    &lt;chr&gt;    &lt;dbl&gt;
+##  1 2019-06-01 00:00:00    84 1899-12-31 00:04:00 Satu~ Sheppar~ Emergen~    10
+##  2 2019-06-01 00:00:00    29 1899-12-31 01:08:00 Satu~ Princes~ Mechani~     4
+##  3 2019-06-01 00:00:00    29 1899-12-31 01:25:00 Satu~ Exhibit~ Utilize~     9
+##  4 2019-06-01 00:00:00   118 1899-12-31 01:28:00 Satu~ Tanridg~ Emergen~    30
+##  5 2019-06-01 00:00:00   161 1899-12-31 01:37:00 Satu~ Jane / ~ Investi~     1
+##  6 2019-06-01 00:00:00   300 1899-12-31 02:00:00 Satu~ Termina~ General~    30
+##  7 2019-06-01 00:00:00   300 1899-12-31 02:06:00 Satu~ Kipling~ Investi~    15
+##  8 2019-06-01 00:00:00   339 1899-12-31 02:29:00 Satu~ Midland~ Diversi~   191
+##  9 2019-06-01 00:00:00   320 1899-12-31 02:58:00 Satu~ Yonge a~ Investi~     3
+## 10 2019-06-01 00:00:00   320 1899-12-31 03:05:00 Satu~ Yonge a~ Emergen~     4
+## # ... with 5,222 more rows, and 3 more variables: Gap &lt;dbl&gt;, Direction &lt;chr&gt;,
+## #   Vehicle &lt;dbl&gt;
+
+
+
+streetcar_delay_year &lt;- search_packages(&quot;TTC Streetcar Delay Data&quot;) %&gt;% #First, looking for packages TTC Subway Delay data, need to specify this as there are more types of delay data that we will be selecting later on
+  list_package_resources() %&gt;% 
+  filter(grepl(&#39;ttc-streetcar-delay-data-2019&#39;,name)) %&gt;% 
+  get_resource()
+
+streetcar_delay &lt;- streetcar_delay_year[[&quot;June 2019 &quot;]]
+streetcar_delay
+## # A tibble: 929 x 10
+##    `Report Date`       Route Time                Day   Location Incident Delay
+##    &lt;dttm&gt;              &lt;dbl&gt; &lt;dttm&gt;              &lt;chr&gt; &lt;chr&gt;    &lt;chr&gt;    &lt;dbl&gt;
+##  1 2019-06-01 00:00:00   501 1899-12-31 00:27:00 Satu~ Queen a~ Held By     16
+##  2 2019-06-01 00:00:00   510 1899-12-31 01:26:00 Satu~ Spadina~ Emergen~    11
+##  3 2019-06-01 00:00:00   504 1899-12-31 08:33:00 Satu~ Roncesv~ Mechani~     5
+##  4 2019-06-01 00:00:00   504 1899-12-31 09:24:00 Satu~ Bloor a~ Held By      4
+##  5 2019-06-01 00:00:00   504 1899-12-31 09:36:00 Satu~ King an~ Held By      8
+##  6 2019-06-01 00:00:00   511 1899-12-31 10:07:00 Satu~ Bathurs~ Diversi~    15
+##  7 2019-06-01 00:00:00   511 1899-12-31 11:11:00 Satu~ Bathurs~ Mechani~     6
+##  8 2019-06-01 00:00:00   506 1899-12-31 12:16:00 Satu~ MAIN ST~ Mechani~     6
+##  9 2019-06-01 00:00:00   504 1899-12-31 13:25:00 Satu~ Dundas ~ Held By      6
+## 10 2019-06-01 00:00:00   512 1899-12-31 15:14:00 Satu~ St Clai~ Investi~    27
+## # ... with 919 more rows, and 3 more variables: Gap &lt;dbl&gt;, Direction &lt;chr&gt;,
+## #   Vehicle &lt;dbl&gt;</code></pre>
+<pre class="r"><code>subway_delay %&gt;% 
+  ggplot(aes(x = Line)) +
+  geom_bar()</code></pre>
+<p><img src="/post/problem_set1_files/figure-html/unnamed-chunk-1-1.png" width="672" /></p>
+</div>
+<div id="weaknesses-and-next-steps" class="section level1">
+<h1>Weaknesses and next steps:</h1>
+<ul>
+<li><p>A few immediate next steps can be identified. For starters, it would be interesting to see year-over-year(YOY) trends. This would be a good metric for TTC as they can identify whether they are reducing the number of delays and the severity of delays. Furthermore, by understanding the distribution of the cause of the delays, TTC will be able to assess weaknesses in their own system. It could have implications on upgrading their trains and buses, increasing the number of back-up trains.</p></li>
+<li><p>Covid-19 has inexplicably affected every part of our lives, transportation is no different.It would be interesting to see how some of the policies that have come about as a result of COVID-19. For example, has the disinfection process reduced the number of buses that can service a route? The reduced number of patrons might call for an increase in the number of vehicles that are in use, does this increase in number of vehicles translate to an increase in delays?</p></li>
+</ul>
+</div>
+<div id="references" class="section level1">
+<h1>References</h1>
+<ul>
+<li><p>Tierney N (2017). “visdat: Visualising Whole Data Frames.” <em>JOSS</em>, <em>2</em>(16), 355. doi: 10.21105/joss.00355 (URL:
+<a href="https://doi.org/10.21105/joss.00355" class="uri">https://doi.org/10.21105/joss.00355</a>), &lt;URL: <a href="http://dx.doi.org/10.21105/joss.00355" class="uri">http://dx.doi.org/10.21105/joss.00355</a>&gt;.</p></li>
+<li><p>Wickham et al., (2019). Welcome to the tidyverse. Journal of Open Source Software, 4(43), 1686,
+<a href="https://doi.org/10.21105/joss.01686" class="uri">https://doi.org/10.21105/joss.01686</a></p></li>
+<li><p>Sharla Gelfand (2020). opendatatoronto: Access the City of Toronto Open Data Portal. R package version 0.1.3.
+<a href="https://CRAN.R-project.org/package=opendatatoronto" class="uri">https://CRAN.R-project.org/package=opendatatoronto</a></p></li>
+<li><p>H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016.</p></li>
+<li><p>Elin Waring, Michael Quinn, Amelia McNamara, Eduardo Arino de la Rubia, Hao Zhu and Shannon Ellis (2020). skimr:
+Compact and Flexible Summaries of Data. R package version 2.1.2. <a href="https://CRAN.R-project.org/package=skimr" class="uri">https://CRAN.R-project.org/package=skimr</a></p></li>
+</ul>
+<pre class="r"><code>
+citation(&quot;tidyverse&quot;)
+## 
+##   Wickham et al., (2019). Welcome to the tidyverse. Journal of Open
+##   Source Software, 4(43), 1686, https://doi.org/10.21105/joss.01686
+## 
+## A BibTeX entry for LaTeX users is
+## 
+##   @Article{,
+##     title = {Welcome to the {tidyverse}},
+##     author = {Hadley Wickham and Mara Averick and Jennifer Bryan and Winston Chang and Lucy D&#39;Agostino McGowan and Romain François and Garrett Grolemund and Alex Hayes and Lionel Henry and Jim Hester and Max Kuhn and Thomas Lin Pedersen and Evan Miller and Stephan Milton Bache and Kirill Müller and Jeroen Ooms and David Robinson and Dana Paige Seidel and Vitalie Spinu and Kohske Takahashi and Davis Vaughan and Claus Wilke and Kara Woo and Hiroaki Yutani},
+##     year = {2019},
+##     journal = {Journal of Open Source Software},
+##     volume = {4},
+##     number = {43},
+##     pages = {1686},
+##     doi = {10.21105/joss.01686},
+##   }
+citation(&quot;opendatatoronto&quot;)
+## 
+## To cite package &#39;opendatatoronto&#39; in publications use:
+## 
+##   Sharla Gelfand (2020). opendatatoronto: Access the City of Toronto
+##   Open Data Portal. R package version 0.1.3.
+##   https://CRAN.R-project.org/package=opendatatoronto
+## 
+## A BibTeX entry for LaTeX users is
+## 
+##   @Manual{,
+##     title = {opendatatoronto: Access the City of Toronto Open Data Portal},
+##     author = {Sharla Gelfand},
+##     year = {2020},
+##     note = {R package version 0.1.3},
+##     url = {https://CRAN.R-project.org/package=opendatatoronto},
+##   }
+citation(&quot;ggplot2&quot;)
+## 
+## To cite ggplot2 in publications, please use:
+## 
+##   H. Wickham. ggplot2: Elegant Graphics for Data Analysis.
+##   Springer-Verlag New York, 2016.
+## 
+## A BibTeX entry for LaTeX users is
+## 
+##   @Book{,
+##     author = {Hadley Wickham},
+##     title = {ggplot2: Elegant Graphics for Data Analysis},
+##     publisher = {Springer-Verlag New York},
+##     year = {2016},
+##     isbn = {978-3-319-24277-4},
+##     url = {https://ggplot2.tidyverse.org},
+##   }
+citation(&quot;skimr&quot;)
+## 
+## To cite package &#39;skimr&#39; in publications use:
+## 
+##   Elin Waring, Michael Quinn, Amelia McNamara, Eduardo Arino de la
+##   Rubia, Hao Zhu and Shannon Ellis (2020). skimr: Compact and Flexible
+##   Summaries of Data. R package version 2.1.2.
+##   https://CRAN.R-project.org/package=skimr
+## 
+## A BibTeX entry for LaTeX users is
+## 
+##   @Manual{,
+##     title = {skimr: Compact and Flexible Summaries of Data},
+##     author = {Elin Waring and Michael Quinn and Amelia McNamara and Eduardo {Arino de la Rubia} and Hao Zhu and Shannon Ellis},
+##     year = {2020},
+##     note = {R package version 2.1.2},
+##     url = {https://CRAN.R-project.org/package=skimr},
+##   }
+citation(&quot;blogdown&quot;)
+## 
+## To cite the &#39;blogdown&#39; package in publications use:
+## 
+##   Yihui Xie (2020). blogdown: Create Blogs and Websites with R
+##   Markdown. R package version 0.20.
+## 
+##   Yihui Xie, Alison Presmanes Hill, and Amber Thomas (2017). blogdown:
+##   Creating Websites with R Markdown. Chapman and Hall/CRC. ISBN
+##   978-0815363729
+## 
+## To see these entries in BibTeX format, use &#39;print(&lt;citation&gt;,
+## bibtex=TRUE)&#39;, &#39;toBibtex(.)&#39;, or set
+## &#39;options(citation.bibtex.max=999)&#39;.
+citation(&quot;visdat&quot;)
+## 
+## Tierney N (2017). &quot;visdat: Visualising Whole Data Frames.&quot; _JOSS_,
+## *2*(16), 355. doi: 10.21105/joss.00355 (URL:
+## https://doi.org/10.21105/joss.00355), &lt;URL:
+## http://dx.doi.org/10.21105/joss.00355&gt;.
+## 
+## A BibTeX entry for LaTeX users is
+## 
+##   @Article{,
+##     title = {visdat: Visualising Whole Data Frames},
+##     author = {Nicholas Tierney},
+##     doi = {10.21105/joss.00355},
+##     url = {http://dx.doi.org/10.21105/joss.00355},
+##     year = {2017},
+##     publisher = {Journal of Open Source Software},
+##     volume = {2},
+##     number = {16},
+##     pages = {355},
+##     journal = {JOSS},
+##   }</code></pre>
+</div>
+
+    </div>
+  </article>
+
+  
+
+
+</main>
+
+      <footer class="footer">
+        <ul class="footer-links">
+          <li>
+            <a href="/index.xml" type="application/rss+xml" target="_blank">RSS feed</a>
+          </li>
+          <li>
+            <a href="https://gohugo.io/" class="footer-links-kudos">Made with <img src="/images/hugo-logo.png" alt="Img link to Hugo website" width="22" height="22"></a>
+          </li>
+        </ul>
+      </footer>
+
+    </div>
+    
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/r.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/yaml.min.js"></script>
+<script>hljs.configure({languages: []}); hljs.initHighlightingOnLoad();</script>
+
+
+
+    
+
+    
+  </body>
+</html>
+
