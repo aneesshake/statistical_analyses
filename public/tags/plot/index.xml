@@ -1,21 +1,0 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
-  <channel>
-    <title>plot on Anees&#39; Website</title>
-    <link>/tags/plot/</link>
-    <description>Recent content in plot on Anees&#39; Website</description>
-    <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
-    <lastBuildDate>Sat, 19 Sep 2020 21:13:14 -0500</lastBuildDate><atom:link href="/tags/plot/index.xml" rel="self" type="application/rss+xml" />
-    <item>
-      <title>TTC Delays</title>
-      <link>/2020/09/19/ttc-delays/</link>
-      <pubDate>Sat, 19 Sep 2020 21:13:14 -0500</pubDate>
-      
-      <guid>/2020/09/19/ttc-delays/</guid>
-      <description>IntroductionIn this analyses, we are going to look at the average delay time of TTC subways, streetcars, and buses
-library(tidyverse)library(blogdown)library(opendatatoronto)library(skimr)library(visdat)subway_error_codes &amp;lt;- search_packages(&amp;quot;TTC Subway Delay Data&amp;quot;) %&amp;gt;% list_package_resources() %&amp;gt;% filter(name == &amp;quot;ttc-subway-delay-codes&amp;quot;) %&amp;gt;% get_resource()## New names:## * `` -&amp;gt; ...1## * `CODE DESCRIPTION` -&amp;gt; `CODE DESCRIPTION...3`## * `` -&amp;gt; ...4## * `` -&amp;gt; ...5## * `CODE DESCRIPTION` -&amp;gt; `CODE DESCRIPTION.</description>
-    </item>
-    
-  </channel>
-</rss>
